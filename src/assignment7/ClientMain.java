@@ -22,7 +22,7 @@ public class ClientMain {
 	static {
 	    myPackage = ClientMain.class.getPackage().toString().split(" ")[1];
 	    } 
-	public void initView() {
+	public void initView() {//can ignore and replace with GUI
 		JFrame frame = new JFrame("Client A"); 
 		JPanel mainPanel = new JPanel(); 
 		incoming = new JTextArea(15, 50); 
