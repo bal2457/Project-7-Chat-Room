@@ -182,18 +182,7 @@ public class ClientMain extends Application{
 			tf.requestFocus();
 		}
       });
-        tf.setOnKeyPressed(event -> {
-            if(event.getCode().equals(KeyCode.ENTER)){
-               // tf.clear();
-               // writer.println(clientUsername+": "+tf.getText());
-            	clientList.add(clientUsername+": "+tf.getText());
-            	writer.println(clientList); 
-    			writer.flush();
-    			//if(clientList.contains(o))
-    			tf.setText("");
-    			tf.requestFocus();
-            }
-        });
+//
 
         mainPane.setCenter(new ScrollPane(ta));
         mainPane.setBottom(paneForTextField);
@@ -287,8 +276,9 @@ public class ClientMain extends Application{
             });
     }
 	private void setUpNetworking() throws Exception {
-		@SuppressWarnings("resource") 
-		Socket sock = new Socket("127.0.0.1", 4242);
+		@SuppressWarnings("resource")
+        String ipAddress = InetAddress.getLocalHost().getHostAddress();
+		Socket sock = new Socket(ipAddress, 4242);
 		InputStreamReader streamReader = new InputStreamReader(sock.getInputStream());
 		reader = new BufferedReader(streamReader); 
 		writer = new PrintWriter(sock.getOutputStream()); 
