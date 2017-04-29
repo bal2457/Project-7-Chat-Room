@@ -1,8 +1,20 @@
+/* Project 7 Chat Room <MyClass.java>
+ * EE422C Project 7 submission by
+ * Bryan Leon
+ * bal2457
+ * 16238
+ * Daniel Laveman
+ * del824
+ * 16230
+ * Slip days used: <0>
+ * Spring 2017
+ */
 package assignment7;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.util.*;
 
 //import com.sun.javafx.scene.layout.region.BackgroundFill;
 
@@ -27,32 +39,32 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-public class ClientMain extends Application{ 
-	private BufferedReader reader; 
-	private PrintWriter writer;
+public class ClientMain extends Application{
+	private int type=0;
+	protected BufferedReader reader; 
+	protected PrintWriter writer;
 	private static String myPackage;
 	private String name;
-    private String clientUsername;
-    private double windowWidth = 550;
-    private double windowHeight = 400;
-    private boolean loginStatus = false;
+    protected String clientUsername;
+    protected double windowWidth = 550;
+    protected double windowHeight = 400;
+    private boolean group = false;
     private GridPane gui;
     private TextArea ta, ta1;
+    public ArrayList<String> clientList=new ArrayList<String>();
 
-    private static int clientNumber = 0;
+    protected static int clientNumber = 0;
     private TextArea chatLog = new TextArea();
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
         setUpNetworking();
         loginSetup(primaryStage);
         //chatStartUp(primaryStage);
 
     }
 
-    private void loginSetup(Stage primaryStage) {
-
+    protected void loginSetup(Stage primaryStage) {
         primaryStage.setTitle("Longhorn Messenger Client");
         primaryStage.setHeight(windowHeight);
         primaryStage.setWidth(windowWidth);
@@ -71,7 +83,8 @@ public class ClientMain extends Application{
         titleText.setFill(Color.BLACK);
         titleText.setFont(Font.font(null, 40));
         gui.add(titleText, 0, 0);
-
+        if(type==0){
+        
         Label usernameLabel = new Label("Enter Username: ");
         TextField usernameTextField = new TextField();
         HBox HBUsername = new HBox();
@@ -102,11 +115,22 @@ public class ClientMain extends Application{
             chatStartUp(primaryStage);
         	}
         });
+    }
+        else {
+   //     	if(type==2)
+        		clientUsername=name;
+   //     	else if(type==1){
+        		
+    //    	}
+        	clientNumber++;
+    	    Server.addUsername(clientUsername, clientNumber);
+    	    chatStartUp(primaryStage);
+        }
         primaryStage.setScene(new Scene(gui));
         primaryStage.show();
     }
 
-    private void chatStartUp(Stage primaryStage){
+    protected void chatStartUp(Stage primaryStage){
         gui.getChildren().clear();
         windowHeight = 900; windowWidth = 650;
         primaryStage.setMinWidth(windowWidth);
@@ -114,7 +138,7 @@ public class ClientMain extends Application{
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
         primaryStage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth()-windowWidth);
         primaryStage.setY(primaryScreenBounds.getMinY());
-//        gui.setBackground(new Background (new BackgroundFill(Color.DARKORANGE, new CornerRadii(1), null)));
+        gui.setBackground(new Background (new BackgroundFill(Color.DARKORANGE, new CornerRadii(1), null)));
         // Panel p to hold the label and text field
         Button mainSend = new Button("Send");
         BorderPane paneForTextField = new BorderPane();
@@ -125,15 +149,33 @@ public class ClientMain extends Application{
         tf.setAlignment(Pos.BOTTOM_LEFT);
         paneForTextField.setCenter(tf);
         BorderPane mainPane = new BorderPane();
+        TextField groupTF=new TextField();
+        groupTF.setPromptText("Enter client name to add");
+        TextField indivTF=new TextField();
+        indivTF.setPromptText("Who do you want to message?");
         ta = new TextArea();
         ta.setWrapText(true);
         ta.setEditable(false);
         ta.setMaxWidth(windowWidth-10);
         ta.setPrefHeight(windowHeight-240);
+		Server.addClient(this);
 
       mainSend.setOnAction(new EventHandler<ActionEvent>(){
 		@Override
 		public void handle(ActionEvent event) {
+			if(!indivTF.getText().equals("")){
+				for(ClientMain c:Server.getClients()){
+					c.group=false;
+					c.clientList.clear();
+					c.clientList.add(clientUsername);
+					c.clientList.add(indivTF.getText());
+				}
+			}
+			else{
+				for(ClientMain c:Server.getClients()){
+					c.group=true;
+					}
+			}
 			writer.println(clientUsername+": "+tf.getText()); 
 			writer.flush();
 			tf.setText("");
@@ -142,8 +184,14 @@ public class ClientMain extends Application{
       });
         tf.setOnKeyPressed(event -> {
             if(event.getCode().equals(KeyCode.ENTER)){
-                tf.clear();
-            //TODO: Add code for what happens when you press enter to send chat
+               // tf.clear();
+               // writer.println(clientUsername+": "+tf.getText());
+            	clientList.add(clientUsername+": "+tf.getText());
+            	writer.println(clientList); 
+    			writer.flush();
+    			//if(clientList.contains(o))
+    			tf.setText("");
+    			tf.requestFocus();
             }
         });
 
@@ -153,33 +201,31 @@ public class ClientMain extends Application{
         gui.add(mainPane, 0, 0);
         HBox hb1 = new HBox(50);
         Button quitChatButton = new Button("Quit chat client");
-        Button makeGroupButton = new Button("Make Group");
-//        Button oneOnone=new Button("Individual Chat");
+        Button addClientButton = new Button("Add Client");
+        //Button oneOnone=new Button("Individual Chat");
         hb1.getChildren().add( quitChatButton);
-        gui.add(makeGroupButton, 0, 1);
-//        gui.add(oneOnone, 1, 1);
-        makeGroupButton.setOnAction(new EventHandler<ActionEvent>(){
+        gui.add(addClientButton, 1, 2);
+        gui.add(groupTF, 0, 2);
+        //gui.add(oneOnone, 1, 2);
+        gui.add(indivTF, 0, 1);
+        addClientButton.setOnAction(new EventHandler<ActionEvent>(){
 			@Override
 			public void handle(ActionEvent event) {
 				ClientMain newClient=new ClientMain();
+				newClient.type=1;
+				newClient.name=groupTF.getText();
+				groupTF.clear();
 				Stage secondaryStage=new Stage();
+				//oneOnone.setDisable(true);
 				try {
 					newClient.start(secondaryStage);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-/*		oneOnone.setOnAction(new EventHandler<ActionEvent>(){
-
-			@Override
-			public void handle(ActionEvent event) {
+		
 				
-				
-			}
-			
-		});
-				
-				GridPane gui2=new GridPane();
+/*				GridPane gui2=new GridPane();
 				Scene view=new Scene(gui2,10,10);
 				TextField groupField=new TextField();
 				gui2.add(groupField, 0, 0);
@@ -197,7 +243,42 @@ public class ClientMain extends Application{
 			}
         	
         });
-        gui.add(hb1, 0, 2);
+        
+/*        oneOnone.setOnAction(new EventHandler<ActionEvent>(){
+
+			@Override
+			public void handle(ActionEvent event) {
+				ClientMain newClient= new ClientMain();
+				newClient.type=2;
+				Stage secondaryStage=new Stage();
+				//clientList.addAll(Server.getList());
+				if(!clientList.contains(clientUsername)){
+				newClient.clientList.add(clientUsername);
+				}
+				if(!Server.checkUsername(indivTF.getText())){
+					newClient.name=indivTF.getText();
+					indivTF.clear();
+					//clientList.add(newClient.name);
+					//newClient.clientList.add(newClient.name);
+					//clientNumber++;
+				    //Server.addUsername(clientUsername, clientNumber);
+				    chatStartUp(secondaryStage);
+				    secondaryStage.setScene(new Scene(gui));
+				    secondaryStage.show();
+				    
+					try {
+						newClient.start(secondaryStage);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		            //chatStartUp(secondaryStage);
+				}
+				
+			}
+			
+		});*/
+        gui.add(hb1, 1, 0);
         quitChatButton.setOnAction(new EventHandler<ActionEvent>(){
     		@Override
     		public void handle(ActionEvent event) {
@@ -273,7 +354,8 @@ public class ClientMain extends Application{
 			String message; 
 			try {
 				while ((message = reader.readLine()) != null) {
-					ta.appendText(message + "\n"); 
+					if(clientList.contains(clientUsername)||group)
+						ta.appendText(message + "\n"); 
 					}
 			} catch (IOException ex) { 
 				ex.printStackTrace(); 
